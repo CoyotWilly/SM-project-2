@@ -69,8 +69,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		//	BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
 		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n", temperature);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
-		snprintf(input, sizeof(input), "{\"input\":\"%.2f\"}\n", input);
-		HAL_UART_Transmit(&huart2, (uint8_t*)input, strlen(input), 1000);
 		text[0] = 0;
 	}
 }
