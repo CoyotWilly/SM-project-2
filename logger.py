@@ -22,7 +22,7 @@ def serial_config():
 def log_run():
     t = []
     temperature = []
-    u =
+    u =[]
 
 
 if __name__ == "main":

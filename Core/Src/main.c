@@ -56,12 +56,12 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 float temperature = 0.0;
-float error = 0;
+float error = 0.0;
 float temp_requested = 26.0;
 uint32_t pressure = 0;
 uint32_t duty = 1000;
 char text[100] = "";
-char input[100] = "26.0";
+char input[100] = "";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -389,7 +389,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		//	BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
 
 		error = temp_requested - temperature;
-		duty = (uint32_t) arm_pid_f32(&PID_controller, error);
+		duty = (uint32_t*) arm_pid_f32(&PID_controller, error);
 
 		if (duty > WINDUP_UB) {
 			duty = 1000;
@@ -400,9 +400,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 
 		//snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n\r ", temperature);
-		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n", temperature, temp_requested, duty);
+		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n{\"error\":\"%.4f\"}\n", temperature, temp_requested, duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
+
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
 	}
 }
 
