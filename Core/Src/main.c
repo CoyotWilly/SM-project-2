@@ -18,7 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "arm_math.h"
+#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -31,6 +32,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PID_KP 0.956164
+#define PID_KI 0.002263
+#define PID_KD -13.174
+#define WINDUP 1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,7 +52,10 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 float temperature = 0.0;
+float error = 0;
+float temp_requested = 26.0;
 uint32_t pressure = 0;
+uint32_t duty = 1000;
 char text[100] = "";
 char input[100] = "";
 /* USER CODE END PV */
@@ -72,6 +80,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		text[0] = 0;
 	}
 }
+void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
+	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, strlen(input));
+}
+
+arm_pid_instance_f32 PID_controller;
 /* USER CODE END 0 */
 
 /**
@@ -81,7 +94,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	PID_controller.Kp = PID_KP;
+	PID_controller.Ki = PID_KI;
+	PID_controller.Kd = PID_KD;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -107,8 +122,8 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 //  BMP280_Init(&hi2c1, BMP280_TEMPERATURE_16BIT, BMP280_STANDARD, BMP280_FORCEDMODE);
-//  HAL_UART_Receive_IT(&huart2, (uint8_t*)text, strlen(text));
-//  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_UART_Receive_IT(&huart2, (uint8_t*)text, strlen(text));
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
