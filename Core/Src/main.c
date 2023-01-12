@@ -19,9 +19,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "arm_math.h"
-// #include "BMPXX80.h"
+//#include "BMPXX80.h"
+#include "stdio.h"
 #include <string.h>
 #include <stdlib.h>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -61,7 +63,7 @@ float temp_requested = 26.0;
 uint32_t pressure = 0;
 uint32_t duty = 1000;
 char text[100] = "";
-char input[100] = "";
+char input[4] = "";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,7 +122,7 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 //  BMP280_Init(&hi2c1, BMP280_TEMPERATURE_16BIT, BMP280_STANDARD, BMP280_FORCEDMODE);
-  HAL_UART_Receive_IT(&huart2, (uint8_t*)input, strlen(input));
+  HAL_UART_Receive_IT(&huart2, (uint8_t*)input, 4);
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE END 2 */
@@ -386,10 +388,10 @@ static void MX_GPIO_Init(void)
 // CONST measurement and data sending every 1s
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2){
-		//	BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
+//		BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
 
 		error = temp_requested - temperature;
-		duty = (uint32_t*) arm_pid_f32(&PID_controller, error);
+		duty = 1000 * (uint32_t) arm_pid_f32(&PID_controller, error);
 
 		if (duty > WINDUP_UB) {
 			duty = 1000;
@@ -399,7 +401,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			duty = 0;
 		}
 
-		//snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n\r ", temperature);
+//		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n\r ", temperature);
 		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n{\"error\":\"%.4f\"}\n", temperature, temp_requested, duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
@@ -410,13 +412,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 // set temperature via UART implementation
 void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
-	float given = atof(&input_val);
+	float given = 0.01 * atof(input);
 
 	if (given > 0.0){
 		temp_requested = given;
 	}
-
-	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, strlen(input));
+	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, 4);
 }
 /* USER CODE END 4 */
 
