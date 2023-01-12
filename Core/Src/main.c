@@ -80,40 +80,6 @@ static void MX_TIM3_Init(void);
 // PID controller create
 arm_pid_instance_f32 PID_controller;
 
-// CONST measurement and data sending every 1s
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if (htim->Instance == TIM2){
-		//	BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
-
-		error = temp_requested - temperature;
-		duty = (uint32_t) arm_pid_f32(&PID_controller, error);
-
-		if (duty > WINDUP_UB) {
-			duty = 1000;
-		}
-
-		if (duty < WINDUP_LB){
-			duty = 0;
-		}
-
-		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n", temperature);
-		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
-		text[0] = 0;
-	}
-}
-
-// set temperature via UART implementation
-void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
-	float given = atof(&input_val);
-
-	if (given > 0.0){
-		temp_requested = given;
-	}
-
-	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, strlen(input));
-}
-
-
 /* USER CODE END 0 */
 
 /**
@@ -417,7 +383,39 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// CONST measurement and data sending every 1s
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (htim->Instance == TIM2){
+		//	BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
 
+		error = temp_requested - temperature;
+		duty = (uint32_t) arm_pid_f32(&PID_controller, error);
+
+		if (duty > WINDUP_UB) {
+			duty = 1000;
+		}
+
+		if (duty < WINDUP_LB){
+			duty = 0;
+		}
+
+		//snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n\r ", temperature);
+		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n", temperature, temp_requested, duty);
+		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
+		text[0] = 0;
+	}
+}
+
+// set temperature via UART implementation
+void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
+	float given = atof(&input_val);
+
+	if (given > 0.0){
+		temp_requested = given;
+	}
+
+	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, strlen(input));
+}
 /* USER CODE END 4 */
 
 /**
