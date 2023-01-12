@@ -18,7 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "arm_math.h"
+// #include "BMPXX80.h"
+#include <string.h>
+#include <stdlib.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -34,7 +37,8 @@
 #define PID_KP 0.956164
 #define PID_KI 0.002263
 #define PID_KD -13.174
-#define WINDUP 1000
+#define WINDUP_UB 1000
+#define WINDUP_LB 0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,7 +61,7 @@ float temp_requested = 26.0;
 uint32_t pressure = 0;
 uint32_t duty = 1000;
 char text[100] = "";
-char input[100] = "";
+char input[100] = "26.0";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,19 +77,43 @@ static void MX_TIM3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+// PID controller create
+arm_pid_instance_f32 PID_controller;
+
+// CONST measurement and data sending every 1s
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2){
 		//	BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
+
+		error = temp_requested - temperature;
+		duty = (uint32_t) arm_pid_f32(&PID_controller, error);
+
+		if (duty > WINDUP_UB) {
+			duty = 1000;
+		}
+
+		if (duty < WINDUP_LB){
+			duty = 0;
+		}
+
 		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n", temperature);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
 	}
 }
+
+// set temperature via UART implementation
 void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
+	float given = atof(&input_val);
+
+	if (given > 0.0){
+		temp_requested = given;
+	}
+
 	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, strlen(input));
 }
 
-arm_pid_instance_f32 PID_controller;
+
 /* USER CODE END 0 */
 
 /**
@@ -98,6 +126,8 @@ int main(void)
 	PID_controller.Kp = PID_KP;
 	PID_controller.Ki = PID_KI;
 	PID_controller.Kd = PID_KD;
+
+	arm_pid_init_f32(&PID_controller, 1);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -124,7 +154,7 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 //  BMP280_Init(&hi2c1, BMP280_TEMPERATURE_16BIT, BMP280_STANDARD, BMP280_FORCEDMODE);
-  HAL_UART_Receive_IT(&huart2, (uint8_t*)text, strlen(text));
+  HAL_UART_Receive_IT(&huart2, (uint8_t*)input, strlen(input));
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE END 2 */
