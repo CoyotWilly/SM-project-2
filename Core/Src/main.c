@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+//#include "BMPXX80.h"
 #include "arm_math.h"
 #include <string.h>
 #include <stdlib.h>
@@ -47,6 +48,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
@@ -58,9 +61,13 @@ UART_HandleTypeDef huart2;
 float temperature = 0.0;
 float error = 0.0;
 float temp_requested = 26.0;
-_Bool force_control = 1;
+float distance = 0.0;
+
+char force_control[1] = {0};
+
 uint32_t pressure = 0;
 uint32_t duty = 1000;
+
 char text[100] = "";
 char input[4] = "";
 /* USER CODE END PV */
@@ -72,6 +79,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -81,6 +89,14 @@ static void MX_TIM3_Init(void);
 // PID controller create
 arm_pid_instance_f32 PID_controller;
 
+//duty saturation in range(0,1000)
+void saturation(uint32_t duty_value){
+	if (duty_value > WINDUP_UB){
+		duty = 1000;
+	}else if (duty_value < WINDUP_LB) {
+		duty = 0;
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -90,10 +106,12 @@ arm_pid_instance_f32 PID_controller;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	//PID gains assignment
 	PID_controller.Kp = PID_KP;
 	PID_controller.Ki = PID_KI;
 	PID_controller.Kd = PID_KD;
 
+	//PID Init
 	arm_pid_init_f32(&PID_controller, 1);
   /* USER CODE END 1 */
 
@@ -119,11 +137,21 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+//   temperature sensor initialization
 //  BMP280_Init(&hi2c1, BMP280_TEMPERATURE_16BIT, BMP280_STANDARD, BMP280_FORCEDMODE);
+
+  //UART interrupts initialization
   HAL_UART_Receive_IT(&huart2, (uint8_t*)input, 4);
+
+//  Timer start for PWM generation and PID control logic
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+//  LET THE FORCE BE WITH YOU mode start
+  HAL_ADC_Start_IT(&hadc1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -146,6 +174,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -174,6 +203,59 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -389,19 +471,17 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2){
 //		BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
-
-		error = temp_requested - temperature;
-		duty = 100 * (uint32_t) arm_pid_f32(&PID_controller, error);
-
-		if (duty > WINDUP_UB) {
-			duty = 1000;
+		if (force_control[0] == 1){
+			HAL_ADC_Start_IT(&hadc1);
+		} else {
+			error = temp_requested - temperature;
+			duty = (uint32_t)100 *arm_pid_f32(&PID_controller, error);
 		}
 
-		if (duty < WINDUP_LB){
-			duty = 0;
-		}
+		saturation(duty);
 
 //		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n\r ", temperature);
+		//UART data sending for logging
 		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n{\"error\":\"%.4f\"}\n", temperature, temp_requested, duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
@@ -414,11 +494,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
 	float given = 0.01 * atof(input);
 
-	if (given > 0.0){
+	if (given > 99.985){
+		if (force_control[0] == 1){
+			force_control[0] = 0;
+		}else{
+			force_control[0] = 1;
+		}
+	}else if (given > 0.0){
 		temp_requested = given;
 	}
 
 	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, 4);
+}
+
+// distance based control of PWM duty [LET THE FORCE BE WITH YOU MODE]
+void HAL_ADC_ConvCpltCallback ( ADC_HandleTypeDef * hadc ){
+	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+
+	float AdcValue = HAL_ADC_GetValue(&hadc1);
+
+	AdcValue /=  1000;
+	distance = 27.82 * powf(AdcValue, -1.081);
+
+	duty = distance * 25;
+	saturation(duty);
 }
 /* USER CODE END 4 */
 
