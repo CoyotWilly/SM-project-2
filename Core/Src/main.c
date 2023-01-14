@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-//#include "BMPXX80.h"
+#include "BMPXX80.h"
 #include "arm_math.h"
 #include <string.h>
 #include <stdlib.h>
@@ -140,7 +140,7 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 //   temperature sensor initialization
-//  BMP280_Init(&hi2c1, BMP280_TEMPERATURE_16BIT, BMP280_STANDARD, BMP280_FORCEDMODE);
+  BMP280_Init(&hi2c1, BMP280_TEMPERATURE_16BIT, BMP280_STANDARD, BMP280_FORCEDMODE);
 
   //UART interrupts initialization
   HAL_UART_Receive_IT(&huart2, (uint8_t*)input, 4);
@@ -159,7 +159,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
+	  HAL_Delay(500);
     /* USER CODE BEGIN 3 */
 
   }
