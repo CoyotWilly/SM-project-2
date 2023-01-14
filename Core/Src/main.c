@@ -159,10 +159,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
-	  HAL_Delay(500);
-    /* USER CODE BEGIN 3 */
 
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -471,7 +469,7 @@ static void MX_GPIO_Init(void)
 // CONST measurement and data sending every 1s
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2){
-//		BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
+		BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
 		if (force_control[0] == 1){
 			HAL_ADC_Start_IT(&hadc1);
 		} else {
@@ -481,7 +479,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 		saturation(duty);
 
-//		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n\r ", temperature);
 		//UART data sending for logging
 		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n{\"error\":\"%.4f\"}\n", temperature, temp_requested, duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
