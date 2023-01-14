@@ -27,25 +27,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000029  00000000  00000000  000201e8  2**0
                   CONTENTS, READONLY
- 12 .debug_info   0000ebd5  00000000  00000000  00020211  2**0
+ 12 .debug_info   0000ebee  00000000  00000000  00020211  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 000021ae  00000000  00000000  0002ede6  2**0
+ 13 .debug_abbrev 000021ae  00000000  00000000  0002edff  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00000f90  00000000  00000000  00030f98  2**3
+ 14 .debug_aranges 00000f90  00000000  00000000  00030fb0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 00000ee0  00000000  00000000  00031f28  2**3
+ 15 .debug_ranges 00000ee0  00000000  00000000  00031f40  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  00019246  00000000  00000000  00032e08  2**0
+ 16 .debug_macro  00019246  00000000  00000000  00032e20  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00010d1c  00000000  00000000  0004c04e  2**0
+ 17 .debug_line   00010d1c  00000000  00000000  0004c066  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000900ca  00000000  00000000  0005cd6a  2**0
+ 18 .debug_str    000900da  00000000  00000000  0005cd82  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      000000c9  00000000  00000000  000ece34  2**0
+ 19 .comment      000000c9  00000000  00000000  000ece5c  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00005808  00000000  00000000  000ecf00  2**2
+ 20 .debug_frame  00005808  00000000  00000000  000ecf28  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_loc    00000064  00000000  00000000  000f2708  2**0
+ 21 .debug_loc    00000064  00000000  00000000  000f2730  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -2371,13 +2371,12 @@ void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
  800163a:	68fb      	ldr	r3, [r7, #12]
  800163c:	6013      	str	r3, [r2, #0]
 	}
+
 	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, 4);
  800163e:	2204      	movs	r2, #4
  8001640:	4905      	ldr	r1, [pc, #20]	; (8001658 <HAL_UART_RxCpltCallback+0x58>)
  8001642:	4807      	ldr	r0, [pc, #28]	; (8001660 <HAL_UART_RxCpltCallback+0x60>)
  8001644:	f002 fbdd 	bl	8003e02 <HAL_UART_Receive_IT>
-//	snprintf(input, sizeof(input), "%.2f ", given);
-//	HAL_UART_Transmit(&huart2, (uint8_t*)input, 4, 1000);
 }
  8001648:	bf00      	nop
  800164a:	3710      	adds	r7, #16

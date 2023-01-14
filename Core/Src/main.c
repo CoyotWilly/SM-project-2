@@ -18,15 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "arm_math.h"
-//#include "BMPXX80.h"
-#include "stdio.h"
-#include <string.h>
-#include <stdlib.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "arm_math.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +58,7 @@ UART_HandleTypeDef huart2;
 float temperature = 0.0;
 float error = 0.0;
 float temp_requested = 26.0;
+_Bool force_control = 1;
 uint32_t pressure = 0;
 uint32_t duty = 1000;
 char text[100] = "";
@@ -134,6 +133,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -391,7 +391,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 //		BMP280_ReadTemperatureAndPressure(&temperature, &pressure);
 
 		error = temp_requested - temperature;
-		duty = 1000 * (uint32_t) arm_pid_f32(&PID_controller, error);
+		duty = 100 * (uint32_t) arm_pid_f32(&PID_controller, error);
 
 		if (duty > WINDUP_UB) {
 			duty = 1000;
@@ -417,6 +417,7 @@ void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
 	if (given > 0.0){
 		temp_requested = given;
 	}
+
 	HAL_UART_Receive_IT(&huart2, (uint8_t*)input, 4);
 }
 /* USER CODE END 4 */
