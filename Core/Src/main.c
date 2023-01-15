@@ -86,7 +86,7 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-// PID controller create
+// PID controller creation instance
 arm_pid_instance_f32 PID_controller;
 
 //duty saturation in range(0,1000)
@@ -492,7 +492,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		saturation(duty);
 
 		//UART data sending for logging
-		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\"ref\":\"%.2f\",\"u\":\"%.d\",\"error\":\"%.4f\"}\n\r", temperature, temp_requested, duty, error);
+		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\"ref\":\"%.2f\",\"u\":\"%.f\",\"error\":\"%.4f\"}\n\r", temperature, temp_requested,(float) 0.1 * duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
 
