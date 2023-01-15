@@ -60,7 +60,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 float temperature = 0.0;
 float error = 0.0;
-float temp_requested = 26.0;
+float temp_requested = 22.0;
 float distance = 0.0;
 
 char force_control[1] = {0};
@@ -96,6 +96,15 @@ void saturation(uint32_t duty_value){
 	}else if (duty_value < WINDUP_LB) {
 		duty = 0;
 	}
+}
+
+float absf(float value){
+	if (value > 0.0){
+		return value;
+	}else if (value < 0.0){
+		return value * -1;
+	}
+	return 0.0;
 }
 /* USER CODE END 0 */
 
@@ -473,14 +482,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		if (force_control[0] == 1){
 			HAL_ADC_Start_IT(&hadc1);
 		} else {
-			error = temp_requested - temperature;
-			duty = (uint32_t)100 *arm_pid_f32(&PID_controller, error);
+			error = absf(temp_requested - temperature);
+			if (error == 0.0){
+				duty = 0;
+			}else {
+				duty = (uint32_t) 100 * arm_pid_f32(&PID_controller, error);
+			}
 		}
-
 		saturation(duty);
 
 		//UART data sending for logging
-		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\n\r\"ref\":\"%.2f\",\n\r\"u\:\"%.d\",\n\r\"error\":\"%.4f\"}\n\r", temperature, temp_requested, duty, error);
+		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\"ref\":\"%.2f\",\"u\":\"%.d\",\"error\":\"%.4f\"}\n\r", temperature, temp_requested, duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
 
