@@ -480,7 +480,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		saturation(duty);
 
 		//UART data sending for logging
-		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n{\"error\":\"%.4f\"}\n", temperature, temp_requested, duty, error);
+		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\n\r\"ref\":\"%.2f\",\n\r\"u\:\"%.d\",\n\r\"error\":\"%.4f\"}\n\r", temperature, temp_requested, duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
 

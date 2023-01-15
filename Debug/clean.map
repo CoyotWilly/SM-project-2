@@ -4429,8 +4429,7 @@ LOAD e:/trash_stm/stm32cubeide_1.11.0/stm32cubeide/plugins/com.st.stm32cube.ide.
 .rodata         0x000000000800bf40      0x534
                 0x000000000800bf40                . = ALIGN (0x4)
  *(.rodata)
- .rodata        0x000000000800bf40       0x43 ./Core/Src/main.o
- *fill*         0x000000000800bf83        0x1 
+ .rodata        0x000000000800bf40       0x44 ./Core/Src/main.o
  .rodata        0x000000000800bf84       0x10 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc.o
  .rodata        0x000000000800bf94       0x10 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
  *(.rodata*)

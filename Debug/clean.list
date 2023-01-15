@@ -4015,7 +4015,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
  80024ba:	f7ff fd13 	bl	8001ee4 <saturation>
 
 		//UART data sending for logging
-		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\"}\n{\"ref\":\"%.2f\"}\n{\"u\:\"%.d\"}\n{\"error\":\"%.4f\"}\n", temperature, temp_requested, duty, error);
+		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\n\r\"ref\":\"%.2f\",\n\r\"u\:\"%.d\",\n\r\"error\":\"%.4f\"}\n\r", temperature, temp_requested, duty, error);
  80024be:	4b1e      	ldr	r3, [pc, #120]	; (8002538 <HAL_TIM_PeriodElapsedCallback+0x15c>)
  80024c0:	681b      	ldr	r3, [r3, #0]
  80024c2:	4618      	mov	r0, r3
