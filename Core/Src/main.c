@@ -60,7 +60,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 float temperature = 0.0;
 float error = 0.0;
-float temp_requested = 22.0;
+float temp_requested = 26.0;
 float distance = 0.0;
 
 char force_control[1] = {0};

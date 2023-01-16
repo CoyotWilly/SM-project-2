@@ -2994,7 +2994,7 @@ uint8_t BMP280_ReadTemperatureAndPressure(float *temperature, int32_t *pressure)
 
 08001ee4 <saturation>:
 /* USER CODE BEGIN 0 */
-// PID controller create
+// PID controller creation instance
 arm_pid_instance_f32 PID_controller;
 
 //duty saturation in range(0,1000)
