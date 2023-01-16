@@ -1,14 +1,26 @@
-import numpy as np
-import serial.tools.list_ports
-import time
-from time import sleep
-import json
-import matplotlib.pyplot as plt
-import keyboard
-import threading
 import csv
+import json
+import threading
+import time
+
+import keyboard
+import matplotlib.pyplot as plt
+import serial.tools.list_ports
 
 val = 26.0
+
+
+def console_handler():
+    global val
+    while True:
+        val = input()
+        val = round(float(val), 2)
+        if val < 0.0:
+            receiver.write(b'0000')
+        elif val > 99.99:
+            receiver.write(b'9998')
+        else:
+            receiver.write(str(val * 100).encode())
 
 
 def plotting(time_plt, temperature_plt, ref_plt, u_plt, error_plt):
@@ -48,19 +60,24 @@ for i in port:
 print("If you would like to change reference temperature just type it BELOW")
 print("Available range of temperatures [0; 99.98] AND 99.99 is CODE VALUE to change duty control source")
 print("Required temperature =")
-# console_input = 0
+
+# thread initialization and start for console reference temperature control
+thread = threading.Thread(target=console_handler)
+thread.start()
 
 # create a file
-# time_str = time.strftime("%Y%m%d-%H%M%S")
-# file = open("data_open_loop_object%s.csv" % time_str, "a")
-# error_checker_file = open("data_error_check%s.csv" % time_str, "a")
-#
-# # initialize columns and assign names to them
-# writer = csv.DictWriter(file, fieldnames=["temperature", "ref", "u", "error"])
-# writer.writeheader()
-#
-# error_writer = csv.DictWriter(error_checker_file, fieldnames=["error"])
-# error_writer.writeheader()
+time_str = time.strftime("%Y%m%d-%H%M%S")
+file = open("data_open_loop_object%s.csv" % time_str, "a", newline='')
+
+
+# initialize columns and assign names to them
+writer = csv.DictWriter(file, fieldnames=["temperature", "ref", "u", "error"])
+writer.writeheader()
+
+# error file saver -- ENABLE VARIABLE
+error_checker_file = 0
+error_writer = 0
+error_file_write = False
 
 # receiver assigment
 receiver = serial.Serial('COM6', 115200, timeout=1, parity=serial.PARITY_NONE)
@@ -68,27 +85,9 @@ receiver = serial.Serial('COM6', 115200, timeout=1, parity=serial.PARITY_NONE)
 # enable plot update
 plt.ion()
 
-
-def console_handler():
-    global val
-    while True:
-        val = input()
-        val = round(float(val), 2)
-        if val < 0.0:
-            receiver.write(b'0000')
-        elif val > 99.99:
-            receiver.write(b'9998')
-        else:
-            receiver.write(str(val * 100).encode())
-
-
 # time declaration
 t = []
 t_max = 0
-
-# thread initialization and start for console reference temperature control
-thread = threading.Thread(target=console_handler)
-thread.start()
 
 # JSON data properties assigment
 temperature = []
@@ -114,13 +113,19 @@ while True:
         print(temp)
         receiver.flush()
         receiver.reset_input_buffer()
-    # file.write("%.2f," % float(temp[0])) OLD JUNK
 
     # CSV file writer -- ALL data
-    # writer.writerow(sample)
+    writer.writerow(sample)
 
-    # CSV file writer -- ERROR data
-    # writer.writerow(temp[3])
+    # CSV file writer -- ENABLE writing
+    if float(temp[0]) >= float(temp[1]):
+        error_file_write = True
+        error_checker_file = open("data_error_check%s.csv" % time_str, "a", newline='')
+        error_writer = csv.DictWriter(error_checker_file, fieldnames=["error"])
+        error_writer.writeheader()
+
+    if error_file_write:
+        error_writer.writerow(temp[3])
 
     temperature.append(float(temp[0]))
     ref.append(float(temp[1]))
@@ -137,6 +142,6 @@ while True:
 
 
 receiver.close()
-# error_checker_file.close()
-# file.close()
+error_checker_file.close()
+file.close()
 
