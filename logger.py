@@ -5,13 +5,16 @@ from time import sleep
 import json
 import matplotlib.pyplot as plt
 import keyboard
+import threading
 import csv
+
+val = 26.0
 
 
 def plotting(time_plt, temperature_plt, ref_plt, u_plt, error_plt):
     plt.clf()
     plt.subplot(3, 1, 1)
-    plt.plot(time_plt, temperature_plt, time, ref_plt)
+    plt.plot(time_plt, temperature_plt, time_plt, ref_plt)
     plt.title("BMP280 logger")
     plt.ylabel("Temperature [C]")
     plt.legend(["Current", "Reference point"])
@@ -40,20 +43,52 @@ for i in port:
     ports.append(str(i))
     print(str(i))
 
+
+# input from console handler
+print("If you would like to change reference temperature just type it BELOW")
+print("Available range of temperatures [0; 99.98] AND 99.99 is CODE VALUE to change duty control source")
+print("Required temperature =")
+# console_input = 0
+
 # create a file
 # time_str = time.strftime("%Y%m%d-%H%M%S")
-# file = with open("data_open_loop_object%s.csv" % time_str, "w")
+# file = open("data_open_loop_object%s.csv" % time_str, "a")
+# error_checker_file = open("data_error_check%s.csv" % time_str, "a")
+#
+# # initialize columns and assign names to them
+# writer = csv.DictWriter(file, fieldnames=["temperature", "ref", "u", "error"])
+# writer.writeheader()
+#
+# error_writer = csv.DictWriter(error_checker_file, fieldnames=["error"])
+# error_writer.writeheader()
 
-# file_csv = csv.DictWriter(file, fieldnames=name)
 # receiver assigment
 receiver = serial.Serial('COM6', 115200, timeout=1, parity=serial.PARITY_NONE)
 
 # enable plot update
 plt.ion()
 
+
+def console_handler():
+    global val
+    while True:
+        val = input()
+        val = round(float(val), 2)
+        if val < 0.0:
+            receiver.write(b'0000')
+        elif val > 99.99:
+            receiver.write(b'9998')
+        else:
+            receiver.write(str(val * 100).encode())
+
+
 # time declaration
 t = []
 t_max = 0
+
+# thread initialization and start for console reference temperature control
+thread = threading.Thread(target=console_handler)
+thread.start()
 
 # JSON data properties assigment
 temperature = []
@@ -62,6 +97,7 @@ ref = []
 error = []
 sample = []
 u_prev = 10000
+
 while True:
     text = receiver.readline()
     temp = [0, 0, 0, 0]
@@ -78,19 +114,29 @@ while True:
         print(temp)
         receiver.flush()
         receiver.reset_input_buffer()
-    # file.write("%.2f," % float(temp[0]))
-    file.writeheader
-    temperature.append(temp[0])
-    ref.append(temp[1])
-    u.append(temp[2])
-    error.append(temp[3])
+    # file.write("%.2f," % float(temp[0])) OLD JUNK
+
+    # CSV file writer -- ALL data
+    # writer.writerow(sample)
+
+    # CSV file writer -- ERROR data
+    # writer.writerow(temp[3])
+
+    temperature.append(float(temp[0]))
+    ref.append(float(temp[1]))
+    u.append(float(temp[2]))
+    error.append(float(temp[3]))
     t.append(t_max)
     t_max += 1
 
     plotting(t, temperature, ref, u, error)
 
+    # exit using keyboard
     if keyboard.is_pressed('q') | keyboard.is_pressed('Q'):
         break
 
+
 receiver.close()
-file.close()
+# error_checker_file.close()
+# file.close()
+
