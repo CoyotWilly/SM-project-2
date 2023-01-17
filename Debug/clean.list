@@ -3493,17 +3493,17 @@ static void MX_TIM2_Init(void)
  8002180:	4b1e      	ldr	r3, [pc, #120]	; (80021fc <MX_TIM2_Init+0x98>)
  8002182:	f04f 4280 	mov.w	r2, #1073741824	; 0x40000000
  8002186:	601a      	str	r2, [r3, #0]
-  htim2.Init.Prescaler = 6300;
+  htim2.Init.Prescaler = 6399;
  8002188:	4b1c      	ldr	r3, [pc, #112]	; (80021fc <MX_TIM2_Init+0x98>)
- 800218a:	f641 029c 	movw	r2, #6300	; 0x189c
+ 800218a:	f641 02ff 	movw	r2, #6399	; 0x18ff
  800218e:	605a      	str	r2, [r3, #4]
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
  8002190:	4b1a      	ldr	r3, [pc, #104]	; (80021fc <MX_TIM2_Init+0x98>)
  8002192:	2200      	movs	r2, #0
  8002194:	609a      	str	r2, [r3, #8]
-  htim2.Init.Period = 10000;
+  htim2.Init.Period = 9999;
  8002196:	4b19      	ldr	r3, [pc, #100]	; (80021fc <MX_TIM2_Init+0x98>)
- 8002198:	f242 7210 	movw	r2, #10000	; 0x2710
+ 8002198:	f242 720f 	movw	r2, #9999	; 0x270f
  800219c:	60da      	str	r2, [r3, #12]
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
  800219e:	4b17      	ldr	r3, [pc, #92]	; (80021fc <MX_TIM2_Init+0x98>)
