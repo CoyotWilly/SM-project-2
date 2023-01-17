@@ -67,17 +67,13 @@ thread.start()
 
 # create a file
 time_str = time.strftime("%Y%m%d-%H%M%S")
-file = open("data_open_loop_object%s.csv" % time_str, "a", newline='')
+file = open("data_close_loop_object%s.csv" % time_str, "a", newline='')
 
 
 # initialize columns and assign names to them
 writer = csv.DictWriter(file, fieldnames=["temperature", "ref", "u", "error"])
 writer.writeheader()
 
-# error file saver -- ENABLE VARIABLE
-error_checker_file = 0
-error_writer = 0
-error_file_write = False
 
 # receiver assigment
 receiver = serial.Serial('COM6', 115200, timeout=1, parity=serial.PARITY_NONE)
@@ -117,16 +113,6 @@ while True:
     # CSV file writer -- ALL data
     writer.writerow(sample)
 
-    # CSV file writer -- ENABLE writing
-    if float(temp[0]) >= float(temp[1]):
-        error_file_write = True
-        error_checker_file = open("data_error_check%s.csv" % time_str, "a", newline='')
-        error_writer = csv.DictWriter(error_checker_file, fieldnames=["error"])
-        error_writer.writeheader()
-
-    if error_file_write:
-        error_writer.writerow(temp[3])
-
     temperature.append(float(temp[0]))
     ref.append(float(temp[1]))
     u.append(float(temp[2]))
@@ -142,6 +128,5 @@ while True:
 
 
 receiver.close()
-error_checker_file.close()
 file.close()
 
