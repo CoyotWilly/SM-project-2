@@ -161,8 +161,11 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
-//  LET THE FORCE BE WITH YOU mode start
+//  Distance mode start
   HAL_ADC_Start_IT(&hadc1);
+
+//  Encoder initialization
+  HAL_TIM_Encoder_Init(&htim1, TIM_CHANNEL_ALL);
 
   /* USER CODE END 2 */
 
@@ -548,8 +551,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\"ref\":\"%.2f\",\"u\":\"%.f\",\"error\":\"%.4f\"}\n\r", temperature, temp_requested,(float) 0.1 * duty, error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
-
-		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
 	}
 	if (htim->Instance == TIM1){
 		if (force_control[0] == 2){
@@ -557,7 +558,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 				duty = ((TIM1->CNT)<<6);
 			}
 		}
+		saturation(duty);
 	}
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
 }
 
 // set temperature via UART implementation
