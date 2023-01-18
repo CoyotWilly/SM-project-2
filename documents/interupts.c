@@ -16,12 +16,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		saturation(duty);
 
 		//UART data sending for logging
-		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\",\"ref\":\"%.2f\",\"u\":\"%.f\",\"error\":\"%.4f\"}\n\r", temperature, temp_requested,(float) 0.1 * duty, error);
+		snprintf(text, sizeof(text), "{\"temperature\":\"%.2f\","
+				"\"ref\":\"%.2f\","
+				"\"u\":\"%.f\","
+				"\"error\":\"%.4f\"}\n\r",
+				temperature,
+				temp_requested,
+				(float) 0.1 * duty,
+				error);
 		HAL_UART_Transmit(&huart2, (uint8_t*)text, strlen(text), 1000);
 		text[0] = 0;
-
-		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
 	}
+	if (htim->Instance == TIM1){
+		if (force_control[0] == 2){
+			if(TIM2->CNT < 1023){
+				duty = ((TIM1->CNT)<<6);
+			}
+		}
+		saturation(duty);
+	}
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
 }
 
 // set temperature via UART implementation
@@ -33,6 +47,12 @@ void HAL_UART_RxCpltCallback ( UART_HandleTypeDef * huart ){
 			force_control[0] = 0;
 		}else{
 			force_control[0] = 1;
+		}
+	}else if ((given > 99.975) && (given < 99.985)){
+		if (force_control[0] == 2){
+			force_control[0] = 0;
+		}else{
+			force_control[0] = 2;
 		}
 	}else if (given > 0.0){
 		temp_requested = given;

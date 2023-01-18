@@ -1,4 +1,4 @@
- /* USER CODE BEGIN 2 */
+  /* USER CODE BEGIN 2 */
 //   temperature sensor initialization
   BMP280_Init(&hi2c1, BMP280_TEMPERATURE_16BIT, BMP280_STANDARD, BMP280_FORCEDMODE);
 
@@ -9,8 +9,11 @@
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
-//  LET THE FORCE BE WITH YOU mode start
+//  Distance mode start
   HAL_ADC_Start_IT(&hadc1);
+
+//  Encoder initialization
+  HAL_TIM_Encoder_Init(&htim1, TIM_CHANNEL_ALL);
 
   /* USER CODE END 2 */
 

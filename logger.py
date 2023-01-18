@@ -18,7 +18,7 @@ def console_handler():
         if val < 0.0:
             receiver.write(b'0000')
         elif val > 99.99:
-            receiver.write(b'9998')
+            receiver.write(b'9999')
         else:
             receiver.write(str(val * 100).encode())
 
